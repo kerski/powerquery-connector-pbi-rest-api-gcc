@@ -989,7 +989,7 @@ PBIRESTAPIGCC.Publish = [
             "ButtonHelp"
         )
     },
-    LearnMoreUrl = "https://github.com/kerski/powerquery-connector-pbi-rest-api-commercial/blob/main/README.md#functions-implemented",
+    LearnMoreUrl = "https://github.com/kerski/powerquery-connector-pbi-rest-api-gcc/blob/main/README.md#functions-implemented",
     SourceImage = PBIRESTAPIGCC.Icons,
     SourceTypeImage = PBIRESTAPIGCC.Icons
 ];
