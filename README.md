@@ -95,6 +95,7 @@ Not all functions from the Power BI REST API have been implemented.  Here are th
 ### Datasets
 | End Point                      | Description  | MSDN Documentation |
 |:-----------------------------|:-------------|:------------------|
+| GetDatasetDiscoverGatewaysInGroup                  | Returns a list of gateways that the specified dataset from the specified workspace can be bound to.  | [Datasets - Discover Gateways In Group](https://learn.microsoft.com/en-us/rest/api/power-bi/datasets/discover-gateways-in-group#gateways) |
 | ExecuteQuery                  | Executes a single Data Analysis Expressions (DAX) query against a dataset  | [Dataset - Execute Queries](https://learn.microsoft.com/en-us/rest/api/power-bi/datasets/execute-queries) |
 | ExecuteQueryInGroup                 | Executes a single Data Analysis Expressions (DAX) query against a dataset within a workspace | [Dataset - Execute Queries In Group](https://learn.microsoft.com/en-us/rest/api/power-bi/datasets/execute-queries-in-group) |
 | GetDatasetInGroup             | Returns the specified dataset from the specified workspace.  | [Datasets - Get Dataset In Group](https://learn.microsoft.com/en-us/rest/api/power-bi/datasets/get-dataset-in-group) |
