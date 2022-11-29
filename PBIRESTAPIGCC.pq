@@ -9,7 +9,7 @@
     custom connector.  For more information on installing a custom data connector with a gateway
     please see: https://learn.microsoft.com/en-us/power-bi/connect-data/service-gateway-custom-connectors .
 */
-[Version = "1.0.0"]
+[Version = "1.1.0"]
 section PBIRESTAPIGCC;
 [
     DataSource.Kind = "PBIRESTAPIGCC",
@@ -22,24 +22,42 @@ shared NavigationTable.Simple = () =>
 let
 	objects = #table(
             {"Name","Key","Data","ItemKind","ItemName","IsLeaf"},{
+            /* Apps */
             {"GetApp","GetApp",PBIRESTAPIGCC.GetApp,"Function","GetApp",true},
             {"GetApps","GetApps",PBIRESTAPIGCC.GetApps,"Function","GetApps",true},
             {"GetDashboardInApp","GetDashboardInApp",PBIRESTAPIGCC.GetDashboardInApp,"Function","GetDashboardInApp",true},
             {"GetDashboardsInApp","GetDashboardsInApp",PBIRESTAPIGCC.GetDashboardsInApp,"Function","GetDashboardsInApp",true},  
             {"GetReportInApp","GetReportInApp",PBIRESTAPIGCC.GetReportInApp,"Function","GetReportInApp",true},
             {"GetReportsInApp","GetReportsInApp",PBIRESTAPIGCC.GetReportsInApp,"Function","GetReportsInApp",true},                      
+            /* Datasets */
             {"GetDatasetInGroup","GetDatasetInGroup",PBIRESTAPIGCC.GetDatasetInGroup,"Function","GetDatasetInGroup",true},
+            {"GetDatasetToDataflowsLinksInGroup","GetDatasetToDataflowsLinksInGroup",PBIRESTAPIGCC.GetDatasetToDataflowsLinksInGroup,"Function","GetDatasetToDataflowsLinksInGroup",true},
+            {"GetDatasetUsersInGroup","GetDatasetUsersInGroup",PBIRESTAPIGCC.GetDatasetUsersInGroup,"Function","GetDatasetUsersInGroup",true},
             {"GetDatasetsInGroup","GetDatasetsInGroup",PBIRESTAPIGCC.GetDatasetsInGroup,"Function","GetDatasetsInGroup",true},
+            {"GetDatasetDatasourcesInGroup","GetDatasetDatasourcesInGroup",PBIRESTAPIGCC.GetDatasetDatasourcesInGroup,"Function","GetDatasetDatasourcesInGroup",true},
+            {"GetDatasetDirectQueryRefreshScheduleInGroup","GetDatasetDirectQueryRefreshScheduleInGroup",PBIRESTAPIGCC.GetDatasetDirectQueryRefreshScheduleInGroup,"Function","GetDatasetDirectQueryRefreshScheduleInGroup",true},
+            {"GetDatasetParametersInGroup","GetDatasetParametersInGroup",PBIRESTAPIGCC.GetDatasetParametersInGroup,"Function","GetDatasetParametersInGroup",true},
+            {"GetDatasetRefreshExecutionDetailsInGroup","GetDatasetRefreshExecutionDetailsInGroup",PBIRESTAPIGCC.GetDatasetRefreshExecutionDetailsInGroup,"Function","GetDatasetRefreshExecutionDetailsInGroup",true},
             {"GetDatasetRefreshHistoryInGroup","GetDatasetRefreshHistoryInGroup",PBIRESTAPIGCC.GetDatasetRefreshHistoryInGroup,"Function","GetDatasetRefreshHistoryInGroup",true},
             {"GetDatasetRefreshScheduleInGroup","GetDatasetRefreshScheduleInGroup",PBIRESTAPIGCC.GetDatasetRefreshScheduleInGroup,"Function","GetDatasetRefreshScheduleInGroup",true},
             {"ExecuteQuery","ExecuteQuery",PBIRESTAPIGCC.ExecuteQuery,"Function","ExecuteQuery",true},
             {"ExecuteQueryInGroup","ExecuteQueryInGroup",PBIRESTAPIGCC.ExecuteQueryInGroup,"Function","ExecuteQueryInGroup",true},
+            /* Reports */
             {"GetReportPageInGroup","GetReportPageInGroup",PBIRESTAPIGCC.GetReportPageInGroup,"Function","GetReportPageInGroup",true},
             {"GetReportPagesInGroup","GetReportPagesInGroup",PBIRESTAPIGCC.GetReportPagesInGroup,"Function","GetReportPagesInGroup",true},
             {"GetReportInGroup","GetReportInGroup",PBIRESTAPIGCC.GetReportInGroup,"Function","GetReportInGroup",true},
             {"GetReportsInGroup","GetReportsInGroup",PBIRESTAPIGCC.GetReportsInGroup,"Function","GetReportsInGroup",true},
+            /* Groups */
             {"GetGroupUsers","GetGroupUsers",PBIRESTAPIGCC.GetGroupUsers,"Function","GetGroupUsers",true},
-            {"GetGroups","GetGroups",PBIRESTAPIGCC.GetGroups,"Function","GetGroups",true}            
+            {"GetGroups","GetGroups",PBIRESTAPIGCC.GetGroups,"Function","GetGroups",true},
+            /* Pipelines */
+            {"GetPipeline","GetPipeline",PBIRESTAPIGCC.GetPipeline,"Function","GetPipeline",true}, 
+            {"GetPipelineOperation","GetPipelineOperation",PBIRESTAPIGCC.GetPipelineOperation,"Function","GetPipelineOperation",true},
+            {"GetPipelineOperations","GetPipelineOperations",PBIRESTAPIGCC.GetPipelineOperations,"Function","GetPipelineOperations",true},
+            {"GetPipelineStageArtifacts","GetPipelineStageArtifacts",PBIRESTAPIGCC.GetPipelineStageArtifacts,"Function","GetPipelineStageArtifacts",true},
+            {"GetPipelineStages","GetPipelineStages",PBIRESTAPIGCC.GetPipelineStages,"Function","GetPipelineStages",true},
+            {"GetPipelineUsers","GetPipelineUsers",PBIRESTAPIGCC.GetPipelineUsers,"Function","GetPipelineUsers",true},
+            {"GetPipelines","GetPipelines",PBIRESTAPIGCC.GetPipelines,"Function","GetPipelines",true}                         
         }),
 	navTable = Table.ForceToNavigationTable(objects, {"Key"},"Name","Data","ItemKind","ItemName","IsLeaf")
 in
@@ -319,9 +337,80 @@ GetDatasetInGroup = (optional groupdId as text, optional datasetId as text) =>
 /*** End GetDatasetInGroup***/
 
 /*** GetDatasetToDataflowsLinksInGroup***/
+shared PBIRESTAPIGCC.GetDatasetToDataflowsLinksInGroup = Value.ReplaceType(
+    GetDatasetToDataflowsLinksInGroup,
+    GetDatasetToDataflowsLinksInGroupType
+);
+
+GetDatasetToDataflowsLinksInGroupType = type function (
+    optional groupdId as (
+        type text meta [
+            Documentation.FieldCaption = "Group ID",
+            Documentation.FieldDescription = "The workspace ID",
+            Documentation.SampleValues = {
+                "xxx-xxxx-yyxa..."
+            }
+        ]
+    )
+) as table meta [
+    Documentation.Name = "PBIRESTAPIGCC.GetDatasetToDataflowsLinksInGroup",
+    Documentation.LongDescription = "Returns a list of upstream dataflows for datasets from the specified workspace.",
+    Documentation.Examples = {
+        [
+            Code = "=PBIRESTAPIGCC.GetDatasetToDataflowsLinksInGroup(""xxx-xxxx-yyxa..."")",
+            Result = "Defined as https://learn.microsoft.com/en-us/rest/api/power-bi/datasets/get-dataset-to-dataflows-links-in-group#datasettodataflowlinksresponse"
+        ]
+    }
+];
+
+GetDatasetToDataflowsLinksInGroup = (optional groupdId as text) =>
+    let
+        result = GetJSON("v1.0/myorg/groups/" & groupdId & "/datasets/upstreamDataflows")
+    in
+        result;
 /*** End GetDatasetToDataflowsLinksInGroup***/
 
 /*** GetDatasetsUsersInGroup***/
+shared PBIRESTAPIGCC.GetDatasetUsersInGroup = Value.ReplaceType(
+    GetDatasetUsersInGroup,
+    GetDatasetUsersInGroupType
+);
+
+GetDatasetUsersInGroupType = type function (
+    optional groupdId as (
+        type text meta [
+            Documentation.FieldCaption = "Group ID",
+            Documentation.FieldDescription = "The workspace ID",
+            Documentation.SampleValues = {
+                "xxx-xxxx-yyxa..."
+            }
+        ]
+    ),
+    optional datasetId as (
+        type text meta [
+            Documentation.FieldCaption = "Dataset ID",
+            Documentation.FieldDescription = "The Dataset ID",
+            Documentation.SampleValues = {
+                "xxx-xxxx-yyx1..."
+            }
+        ]
+    )    
+) as table meta [
+    Documentation.Name = "PBIRESTAPIGCC.GetDatasetUsersInGroup",
+    Documentation.LongDescription = "Returns a list of principals that have access to the specified dataset. When user permissions to a dataset have been recently updated, the new permissions might not be immediately available through API calls.",
+    Documentation.Examples = {
+        [
+            Code = "=PBIRESTAPIGCC.GetDatasetUsersInGroup(""xxx-xxxx-yyxa..."",""xxx-xxxx-yyx1..."")",
+            Result = "Defined as https://learn.microsoft.com/en-us/rest/api/power-bi/datasets/get-dataset-users-in-group#datasetusersaccess"
+        ]
+    }
+];
+
+GetDatasetUsersInGroup = (optional groupdId as text, optional datasetId as text) =>
+    let
+        result = GetJSON("v1.0/myorg/groups/" & groupdId & "/datasets/" & datasetId & "/users")
+    in
+        result;
 /*** End GetDatasetUsersInGroup***/
 
 /*** GetDatasetsInGroup***/
@@ -359,18 +448,188 @@ GetDatasetsInGroup = (optional groupdId as text) =>
 /*** End GetDatasetsInGroup***/
 
 /*** GetDatasetDatasourcesInGroup***/
+shared PBIRESTAPIGCC.GetDatasetDatasourcesInGroup = Value.ReplaceType(
+    GetDatasetDatasourcesInGroup,
+    GetDatasetDatasourcesInGroupType
+);
+
+GetDatasetDatasourcesInGroupType = type function (
+    optional groupdId as (
+        type text meta [
+            Documentation.FieldCaption = "Group ID",
+            Documentation.FieldDescription = "The workspace ID",
+            Documentation.SampleValues = {
+                "xxx-xxxx-yyxa..."
+            }
+        ]
+    ),
+    optional datasetId as (
+        type text meta [
+            Documentation.FieldCaption = "Dataset ID",
+            Documentation.FieldDescription = "The Dataset ID",
+            Documentation.SampleValues = {
+                "xxx-xxxx-yyx1..."
+            }
+        ]
+    )    
+) as table meta [
+    Documentation.Name = "PBIRESTAPIGCC.GetDatasetDatasourcesInGroup",
+    Documentation.LongDescription = "Returns a list of data sources for the specified dataset from the specified workspace.",
+    Documentation.Examples = {
+        [
+            Code = "=PBIRESTAPIGCC.GetDatasetDatasourcesInGroup(""xxx-xxxx-yyxa..."",""xxx-xxxx-yyx1..."")",
+            Result = "Defined as https://learn.microsoft.com/en-us/rest/api/power-bi/datasets/get-datasources-in-group#datasources"
+        ]
+    }
+];
+
+GetDatasetDatasourcesInGroup = (optional groupdId as text, optional datasetId as text) =>
+    let
+        result = GetJSON("v1.0/myorg/groups/" & groupdId & "/datasets/" & datasetId & "/datasources")
+    in
+        result;
 /*** End GetDatasetDatasourcesInGroup***/
 
-/*** GetDatasetDirectQueryRefreshSchedule***/
+/*** GetDatasetDirectQueryRefreshScheduleInGroup***/
+shared PBIRESTAPIGCC.GetDatasetDirectQueryRefreshScheduleInGroup = Value.ReplaceType(
+    GetDatasetDirectQueryRefreshScheduleInGroup,
+    GetDatasetDirectQueryRefreshScheduleInGroupType
+);
+
+GetDatasetDirectQueryRefreshScheduleInGroupType = type function (
+    optional groupdId as (
+        type text meta [
+            Documentation.FieldCaption = "Group ID",
+            Documentation.FieldDescription = "The workspace ID",
+            Documentation.SampleValues = {
+                "xxx-xxxx-yyxa..."
+            }
+        ]
+    ),
+    optional datasetId as (
+        type text meta [
+            Documentation.FieldCaption = "Dataset ID",
+            Documentation.FieldDescription = "The Dataset ID",
+            Documentation.SampleValues = {
+                "xxx-xxxx-yyx1..."
+            }
+        ]
+    )    
+) as table meta [
+    Documentation.Name = "PBIRESTAPIGCC.GetDatasetDirectQueryRefreshScheduleInGroup",
+    Documentation.LongDescription = "Returns the refresh schedule for a specified DirectQuery or LiveConnection dataset from the specified workspace.",
+    Documentation.Examples = {
+        [
+            Code = "=PBIRESTAPIGCC.GetDatasetDirectQueryRefreshScheduleInGroup(""xxx-xxxx-yyxa..."",""xxx-xxxx-yyx1..."")",
+            Result = "Defined as https://learn.microsoft.com/en-us/rest/api/power-bi/datasets/get-direct-query-refresh-schedule-in-group#directqueryrefreshschedule"
+        ]
+    }
+];
+
+GetDatasetDirectQueryRefreshScheduleInGroup = (optional groupdId as text, optional datasetId as text) =>
+    let
+        result = GetJSON("v1.0/myorg/groups/" & groupdId & "/datasets/" & datasetId & "/directQueryRefreshSchedule")
+    in
+        result;
 /*** End GetDatasetDirectQueryRefreshScheduleInGroup***/
 
 /*** GetDatasetGatewayDatasourcesInGroup***/
+// Deprecated
 /*** End GetDatasetGatewayDatasourcesInGroup***/
 
 /*** GetDatasetParametersInGroup***/
+shared PBIRESTAPIGCC.GetDatasetParametersInGroup = Value.ReplaceType(
+    GetDatasetParametersInGroup,
+    GetDatasetParametersInGroupType
+);
+
+GetDatasetParametersInGroupType = type function (
+    optional groupdId as (
+        type text meta [
+            Documentation.FieldCaption = "Group ID",
+            Documentation.FieldDescription = "The workspace ID",
+            Documentation.SampleValues = {
+                "xxx-xxxx-yyxa..."
+            }
+        ]
+    ),
+    optional datasetId as (
+        type text meta [
+            Documentation.FieldCaption = "Dataset ID",
+            Documentation.FieldDescription = "The Dataset ID",
+            Documentation.SampleValues = {
+                "xxx-xxxx-yyx1..."
+            }
+        ]
+    )    
+) as table meta [
+    Documentation.Name = "PBIRESTAPIGCC.GetDatasetParametersInGroup",
+    Documentation.LongDescription = "Returns a list of parameters for the specified dataset from the specified workspace.",
+    Documentation.Examples = {
+        [
+            Code = "=PBIRESTAPIGCC.GetDatasetParametersInGroup(""xxx-xxxx-yyxa..."",""xxx-xxxx-yyx1..."")",
+            Result = "Defined as https://learn.microsoft.com/en-us/rest/api/power-bi/datasets/get-parameters-in-group#mashupparameters"
+        ]
+    }
+];
+
+GetDatasetParametersInGroup = (optional groupdId as text, optional datasetId as text) =>
+    let
+        result = GetJSON("v1.0/myorg/groups/" & groupdId & "/datasets/" & datasetId & "/parameters")
+    in
+        result;
 /*** End GetDatasetParametersInGroup***/
 
 /*** GetDatasetRefreshExecutionDetailsInGroup***/
+shared PBIRESTAPIGCC.GetDatasetRefreshExecutionDetailsInGroup = Value.ReplaceType(
+    GetDatasetRefreshExecutionDetailsInGroup,
+    GetDatasetRefreshExecutionDetailsInGroupType
+);
+
+GetDatasetRefreshExecutionDetailsInGroupType = type function (
+    optional groupdId as (
+        type text meta [
+            Documentation.FieldCaption = "Group ID",
+            Documentation.FieldDescription = "The workspace ID",
+            Documentation.SampleValues = {
+                "xxx-xxxx-yyxa..."
+            }
+        ]
+    ),
+    optional datasetId as (
+        type text meta [
+            Documentation.FieldCaption = "Dataset ID",
+            Documentation.FieldDescription = "The Dataset ID",
+            Documentation.SampleValues = {
+                "xxx-xxxx-yyx1..."
+            }
+        ]
+    ),
+    optional refreshId as (
+        type text meta [
+            Documentation.FieldCaption = "Refresh ID",
+            Documentation.FieldDescription = "The Refresh ID",
+            Documentation.SampleValues = {
+                "xxx-xxxx-yyx2..."
+            }
+        ]
+    )        
+) as table meta [
+    Documentation.Name = "PBIRESTAPIGCC.GetDatasetRefreshExecutionDetailsInGroup",
+    Documentation.LongDescription = "Returns execution details of an enhanced refresh operation for the specified dataset from the specified workspace.",
+    Documentation.Examples = {
+        [
+            Code = "=PBIRESTAPIGCC.GetDatasetRefreshExecutionDetailsInGroup(""xxx-xxxx-yyxa..."",""xxx-xxxx-yyx1..."",""xxx-xxxx-yyx2..."")",
+            Result = "Defined as https://learn.microsoft.com/en-us/rest/api/power-bi/datasets/get-refresh-execution-details-in-group#datasetrefreshdetail"
+        ]
+    }
+];
+
+GetDatasetRefreshExecutionDetailsInGroup = (optional groupdId as text, optional datasetId as text, optional refreshId as text) =>
+    let
+        result = GetJSON("v1.0/myorg/groups/" & groupdId & "/datasets/" & datasetId & "/refreshes/" & refreshId)
+    in
+        result;
 /*** End GetDatasetRefreshExecutionDetailsInGroup***/
 
 /*** GetDatasetRefreshHistoryInGroup***/
@@ -935,6 +1194,279 @@ GetGroups = (optional filter as text, optional top as number, optional skip as n
     in
         result;
 /*** End GetGroups ***/
+
+/*****************
+    Pipelines
+*****************/
+
+/*** GetPipeline***/
+shared PBIRESTAPIGCC.GetPipeline = Value.ReplaceType(
+    GetPipeline,
+    GetPipelineType
+);
+
+GetPipelineType = type function (
+    optional pipelineId as (
+        type text meta [
+            Documentation.FieldCaption = "Pipeline ID",
+            Documentation.FieldDescription = "The deployment pipeline ID.",
+            Documentation.SampleValues = {
+                "xxx-xxxx-yyxa..."
+            }
+        ]
+    ),
+    optional expand as (
+        type text meta [
+            Documentation.FieldCaption = "Expand",
+            Documentation.FieldDescription = "Accepts a comma-separate list of data types, which will be expanded inline in the response. Supports stages.",
+            Documentation.SampleValues = {
+                "stages"
+            }
+        ]
+    )              
+) as table meta [
+    Documentation.Name = "PBIRESTAPIGCC.GetPipeline",
+    Documentation.LongDescription = "Returns the specified deployment pipeline.",
+    Documentation.Examples = {
+        [
+            Code = "=PBIRESTAPIGCC.GetPipeline(""xxx-xxxx-yyxa..."")",
+            Result = "Defined as https://learn.microsoft.com/en-us/rest/api/power-bi/pipelines/get-pipeline#pipeline"
+        ]
+    }
+];
+
+GetPipeline = (optional pipelineId as text, optional expand as text) =>
+    let
+        //Build Query String
+        expandQS = if(expand <> null and expand <> "") then "$expand=" & expand else "",
+        // Now query with parameters
+        result = GetJSON("v1.0/myorg/pipelines/" & pipelineId & expandQS)
+    in
+        result;
+/*** End GetPipeline ***/
+
+/*** GetPipelineOperation***/
+shared PBIRESTAPIGCC.GetPipelineOperation = Value.ReplaceType(
+    GetPipelineOperation,
+    GetPipelineOperationType
+);
+
+GetPipelineOperationType = type function (
+    optional pipelineId as (
+        type text meta [
+            Documentation.FieldCaption = "Pipeline ID",
+            Documentation.FieldDescription = "The deployment pipeline ID.",
+            Documentation.SampleValues = {
+                "xxx-xxxx-yyxa..."
+            }
+        ]
+    ),
+    optional operationId as (
+        type number meta [
+            Documentation.FieldCaption = "Operation ID",
+            Documentation.FieldDescription = "The operation ID.",
+            Documentation.SampleValues = {
+                "xxx-xxxx-yyxa..."
+            }
+        ]
+    )              
+) as table meta [
+    Documentation.Name = "PBIRESTAPIGCC.GetPipelineOperation",
+    Documentation.LongDescription = "Returns the details of the specified deploy operation performed on the specified deployment pipeline, including the deployment execution plan.",
+    Documentation.Examples = {
+        [
+            Code = "=PBIRESTAPIGCC.GetPipelineOperation(""xxx-xxxx-yyxa..."",""xxx-xxxx-yyxb..."")",
+            Result = "Defined as https://learn.microsoft.com/en-us/rest/api/power-bi/pipelines/get-pipeline-operation#pipelineoperation"
+        ]
+    }
+];
+
+GetPipelineOperation = (optional pipelineId as text, optional operationId as text) =>
+    let
+        // Now query with parameters
+        result = GetJSON("v1.0/myorg/pipelines/" & pipelineId & "/operations/" & operationId)
+    in
+        result;
+/*** End GetPipelineOperation ***/
+
+/*** GetPipelineOperations ***/
+shared PBIRESTAPIGCC.GetPipelineOperations = Value.ReplaceType(
+    GetPipelineOperations,
+    GetPipelineOperationsType
+);
+
+GetPipelineOperationsType = type function (
+    optional pipelineId as (
+        type text meta [
+            Documentation.FieldCaption = "Pipeline ID",
+            Documentation.FieldDescription = "The deployment pipeline ID.",
+            Documentation.SampleValues = {
+                "xxx-xxxx-yyxa..."
+            }
+        ]
+    )              
+) as table meta [
+    Documentation.Name = "PBIRESTAPIGCC.GetPipelineOperations",
+    Documentation.LongDescription = "Returns a list of the up-to-20 most recent deploy operations performed on the specified deployment pipeline.",
+    Documentation.Examples = {
+        [
+            Code = "=PBIRESTAPIGCC.GetPipelineOperations(""xxx-xxxx-yyxa..."")",
+            Result = "Defined as https://learn.microsoft.com/en-us/rest/api/power-bi/pipelines/get-pipeline-operations#pipelineoperations"
+        ]
+    }
+];
+
+GetPipelineOperations = (optional pipelineId as text) =>
+    let
+        // Now query with parameters
+        result = GetJSON("v1.0/myorg/pipelines/" & pipelineId & "/operations")
+    in
+        result;        
+/*** End GetPipelineOperations ***/
+
+/*** GetPipelineStageArtifacts ***/
+shared PBIRESTAPIGCC.GetPipelineStageArtifacts = Value.ReplaceType(
+    GetPipelineStageArtifacts,
+    GetPipelineStageArtifactsType
+);
+
+GetPipelineStageArtifactsType = type function (
+    optional pipelineId as (
+        type text meta [
+            Documentation.FieldCaption = "Pipeline ID",
+            Documentation.FieldDescription = "The deployment pipeline ID.",
+            Documentation.SampleValues = {
+                "xxx-xxxx-yyxa..."
+            }
+        ]
+    ),
+    optional stageOrder as (
+        type number meta [
+            Documentation.FieldCaption = "Stage Order",
+            Documentation.FieldDescription = "The deployment pipeline stage order. Development (0), Test (1), Production (2).",
+            Documentation.SampleValues = {
+                "0"
+            }
+        ]
+    )                   
+) as table meta [
+    Documentation.Name = "PBIRESTAPIGCC.GetPipelineStageArtifacts",
+    Documentation.LongDescription = "Returns the supported items from the workspace assigned to the specified stage of the specified deployment pipeline.",
+    Documentation.Examples = {
+        [
+            Code = "=PBIRESTAPIGCC.GetPipelineStageArtifacts(""xxx-xxxx-yyxa..."",""0"")",
+            Result = "Defined as https://learn.microsoft.com/en-us/rest/api/power-bi/pipelines/get-pipeline-stage-artifacts#pipelinestageartifacts"
+        ]
+    }
+];
+
+GetPipelineStageArtifacts = (optional pipelineId as text, optional stageOrder as number) =>
+    let
+        // Check stage order is right number
+        result = if stageOrder <> 0 and stageOrder <> 1 and stageOrder <> 2 then
+            #table( type table [response = text],{{"Stage Order needs to be 0 (Development), 1 (Test), or 2 (Production)"}})
+        else
+            // Now query with parameters
+            GetJSON("v1.0/myorg/pipelines/" & pipelineId & "/stages/" & Number.ToText(stageOrder) & "/artifacts")
+    in
+        result; 
+/*** GetPipelineStageArtifacts ***/
+
+/*** GetPipelineStages ***/
+shared PBIRESTAPIGCC.GetPipelineStages = Value.ReplaceType(
+    GetPipelineStages,
+    GetPipelineStagesType
+);
+
+GetPipelineStagesType = type function (
+    optional pipelineId as (
+        type text meta [
+            Documentation.FieldCaption = "Pipeline ID",
+            Documentation.FieldDescription = "The deployment pipeline ID.",
+            Documentation.SampleValues = {
+                "xxx-xxxx-yyxa..."
+            }
+        ]
+    )                   
+) as table meta [
+    Documentation.Name = "PBIRESTAPIGCC.GetPipelineStages",
+    Documentation.LongDescription = "Returns the stages of the specified deployment pipeline.",
+    Documentation.Examples = {
+        [
+            Code = "=PBIRESTAPIGCC.GetPipelineStages(""xxx-xxxx-yyxa..."")",
+            Result = "Defined as https://learn.microsoft.com/en-us/rest/api/power-bi/pipelines/get-pipeline-stages#pipelinestages"
+        ]
+    }
+];
+
+GetPipelineStages = (optional pipelineId as text) =>
+    let
+        // Now query with parameters
+        result = GetJSON("v1.0/myorg/pipelines/" & pipelineId & "/stages")
+    in
+        result; 
+/*** End GetPipelineStages ***/
+
+/*** GetPipelineUsers ***/
+shared PBIRESTAPIGCC.GetPipelineUsers = Value.ReplaceType(
+    GetPipelineUsers,
+    GetPipelineUsersType
+);
+
+GetPipelineUsersType = type function (
+    optional pipelineId as (
+        type text meta [
+            Documentation.FieldCaption = "Pipeline ID",
+            Documentation.FieldDescription = "The deployment pipeline ID.",
+            Documentation.SampleValues = {
+                "xxx-xxxx-yyxa..."
+            }
+        ]
+    )                   
+) as table meta [
+    Documentation.Name = "PBIRESTAPIGCC.GetPipelineUsers",
+    Documentation.LongDescription = "Returns a list of users that have access to the specified deployment pipeline.",
+    Documentation.Examples = {
+        [
+            Code = "=PBIRESTAPIGCC.GetPipelineUsers(""xxx-xxxx-yyxa..."")",
+            Result = "Defined as https://learn.microsoft.com/en-us/rest/api/power-bi/pipelines/get-pipeline-users#pipelineusers"
+        ]
+    }
+];
+
+GetPipelineUsers = (optional pipelineId as text) =>
+    let
+        // Now query with parameters
+        result = GetJSON("v1.0/myorg/pipelines/" & pipelineId & "/users")
+    in
+        result;
+/*** GetPipelineUsers ***/
+
+/*** GetPipelines ***/
+shared PBIRESTAPIGCC.GetPipelines = Value.ReplaceType(
+    GetPipelines,
+    GetPipelinesType
+);
+
+GetPipelinesType = type function (                   
+) as table meta [
+    Documentation.Name = "PBIRESTAPIGCC.GetPipelines",
+    Documentation.LongDescription = "Returns a list of deployment pipelines that the user has access to.",
+    Documentation.Examples = {
+        [
+            Code = "=PBIRESTAPIGCC.GetPipelines()",
+            Result = "Defined as https://learn.microsoft.com/en-us/rest/api/power-bi/pipelines/get-pipelines#pipelines"
+        ]
+    }
+];
+
+GetPipelines = () =>
+    let
+        // Now query with parameters
+        result = GetJSON("v1.0/myorg/pipelines")
+    in
+        result;
+/*** End GetPipelines ***/
 
 /*****************
     HELPER FUNCTIONS
