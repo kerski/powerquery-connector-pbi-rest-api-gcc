@@ -9,7 +9,6 @@
     custom connector.  For more information on installing a custom data connector with a gateway
     please see: https://learn.microsoft.com/en-us/power-bi/connect-data/service-gateway-custom-connectors .
 */
-
 [Version = "1.2.0"]
 section PBIRESTAPIGCC;
 [
@@ -2641,6 +2640,23 @@ PBIRESTAPIGCC = [
             Resource = "https://analysis.usgovcloudapi.net/powerbi/api"
         ]
     ]
+];
+
+// Data Source UI publishing description
+PBIRESTAPIGCC.Publish = [
+    Beta = true,
+    Category = "Other",
+    ButtonText = {
+        Extension.LoadString(
+            "ButtonTitle"
+        ),
+        Extension.LoadString(
+            "ButtonHelp"
+        )
+    },
+    LearnMoreUrl = "https://github.com/kerski/powerquery-connector-pbi-rest-api-gcc/blob/main/README.md#functions-implemented",
+    SourceImage = PBIRESTAPIGCC.Icons,
+    SourceTypeImage = PBIRESTAPIGCC.Icons
 ];
 
 PBIRESTAPIGCC.Icons = [
