@@ -6,28 +6,33 @@ shared MyExtension.UnitTest =
     Source = PBIRESTAPIGCC.FunctionCatalog(),
     
     /*Variables*/ 
-    AppTestID = "{APP TEST ID}",
-    AppDashboardTestID = "{APP DASHBOARD TEST ID}",
-    AppDashboardTileTestID = "{APP DASHBOARD TILE TEST ID}",
-    AppReportTestID = "{APP REPORT TEST ID}",
-    GroupTestID = "{GROUP TEST ID}",
-    GroupNameFilter = "name eq 'Custom Connector Test'",
-    DatasetTestID = "{DATASET TEST ID}",
-    ReportTestID = "{REPORT Test ID}",
-    ReportTestName = "SampleModel",
-    PipelineTestID = "{PIPELINE TEST ID}",
-    EnchancedRefreshTestID = "{REFRESH TEST ID}",
-    DashboardTestID = "{DASHBOARD TEST ID}",
-    DashboardTileTestID = "{DASHBOARD TILE TEST ID}",
-    DataFlowTestID = "{DATAFLOW TEST ID}",
-    DownstreamDataflowTestID = "{DOWNSTREAM DATAFLOW TEST ID}",
-    ScorecardOneTestID = "{SCORECARD ONE TEST ID}",
-    ScorecardOneGoalTestID = "{SCORECARD ONE GOAL TEST ID}", 
-    ScorecardOneGoalWithRefreshTestID = "{SCORECARD ONE GOAL WITH REFRESH TEST ID}",   
-    ScorecardTwoTestID = "{SCORECARD TWO TEST ID}",
-    ScorecardInternalReportId = "{SCORECARD INTERNAL REPORT ID}",
-    ScorecardOneGoalTimestampID = "{SCORECARD ONE GOAL TIMESTAMP ID}",
+    AppTestID = Environment.FeatureSwitch("AppTestID"),
+    AppDashboardTestID = Environment.FeatureSwitch("AppDashboardTestID"),
+    AppDashboardTileTestID = Environment.FeatureSwitch("AppDashboardTileTestID"),
+    AppReportTestID = Environment.FeatureSwitch("AppReportTestID"),
+    GroupTestID = Environment.FeatureSwitch("GroupTestID"),
+    GroupNameFilter = Environment.FeatureSwitch("GroupNameFilter"),
+    DatasetTestID = Environment.FeatureSwitch("DatasetTestID"),
+    ReportTestID = Environment.FeatureSwitch("ReportTestID"),
+    ReportTestName = Environment.FeatureSwitch("ReportTestName"),
     
+    PipelineTestID = Environment.FeatureSwitch("PipelineTestID"),
+    // Convert rest here to figure out what's wrong
+    EnhancedRefreshTestID = Environment.FeatureSwitch("EnhancedRefreshTestID"),
+    DashboardTestID = Environment.FeatureSwitch("DashboardTestID"),
+    DashboardTileTestID = Environment.FeatureSwitch("DashboardTileTestID"),
+    DataflowTestID = Environment.FeatureSwitch("DataflowTestID"),
+    DownstreamDataflowTestID = Environment.FeatureSwitch("DownstreamDataflowTestID"),
+    ScorecardOneTestID = Environment.FeatureSwitch("ScorecardOneTestID"),
+    ScorecardOneGoalTestID = Environment.FeatureSwitch("ScorecardOneGoalTestID"), 
+    ScorecardOneGoalWithRefreshTestID = Environment.FeatureSwitch("ScorecardOneGoalWithRefreshTestID"),   
+    ScorecardTwoTestID = Environment.FeatureSwitch("ScorecardTwoTestID"),
+    ScorecardInternalReportId = Environment.FeatureSwitch("ScorecardInternalReportId"),
+    ScorecardOneGoalTimestampID = Expression.Evaluate(Environment.FeatureSwitch("ScorecardOneGoalTimestampID")),
+    // Sync Status Workspace ID
+    ScaleOutWorkspaceID = Environment.FeatureSwitch("ScaleOutWorkspaceID"),
+    ScaleOutDatasetID = Environment.FeatureSwitch("ScaleOutDatasetID"),
+
     // Extracts Function from group
     _GetFunction = (_func_key as text) =>
         let
@@ -63,6 +68,7 @@ shared MyExtension.UnitTest =
     GetDatasetsInGroup = _GetFunction("GetDatasetsInGroup"),
     GetDatasetDatasourcesInGroup = _GetFunction("GetDatasetDatasourcesInGroup"),
     GetDatasetDirectQueryRefreshScheduleInGroup = _GetFunction("GetDatasetDirectQueryRefreshScheduleInGroup"),
+    GetDatasetQueryScaleOutStatusInGroup = _GetFunction("GetDatasetQueryScaleOutStatusInGroup"),
     GetDatasetParametersInGroup = _GetFunction("GetDatasetParametersInGroup"),
     GetDatasetRefreshExecutionDetailsInGroup = _GetFunction("GetDatasetRefreshExecutionDetailsInGroup"),
     GetDatasetRefreshHistoryInGroup = _GetFunction("GetDatasetRefreshHistoryInGroup"),
@@ -70,6 +76,7 @@ shared MyExtension.UnitTest =
     ExecuteQuery = _GetFunction("ExecuteQuery"),
     ExecuteQueryInGroup = _GetFunction("ExecuteQueryInGroup"),
     /* Reports */
+    GetPaginatedReportDatasourcesInGroup = _GetFunction("GetPaginatedReportDatasourcesInGroup"),
     GetReportPageInGroup = _GetFunction("GetReportPageInGroup"),
     GetReportPagesInGroup = _GetFunction("GetReportPagesInGroup"),
     GetReportInGroup = _GetFunction("GetReportInGroup"),
@@ -339,7 +346,17 @@ shared MyExtension.UnitTest =
              true,
              Value.Is(GetDatasetDirectQueryRefreshScheduleInGroup,Function.Type)
         ),
-        /*Fact("GetDatasetDirectQueryRefreshScheduleInGroup Should Be Correct Metadata",
+        /* GetDatasetQueryScaleOutStatusInGroup 
+        Fact("GetDatasetQueryScaleOutStatusInGroup Should Be a Function",
+             true,
+             Value.Is(GetDatasetQueryScaleOutStatusInGroup,Function.Type)
+        ), 
+        Fact("GetDatasetQueryScaleOutStatusInGroup Should Have a CommitVersion Property and Value",
+             true,
+             Text.Length(Number.ToText(Json.Document(GetDatasetQueryScaleOutStatusInGroup(ScaleOutWorkspaceID,ScaleOutDatasetID))[#"commitVersion"])) > 0
+        ),*/                
+        /*
+        Fact("GetDatasetDirectQueryRefreshScheduleInGroup Should Be Correct Metadata",
              "datasources",
              Text.AfterDelimiter(Json.Document(GetDatasetDirectQueryRefreshScheduleInGroup(GroupTestID,DatasetTestID))[#"@odata.context"],"#")
         ),*/
@@ -360,7 +377,7 @@ shared MyExtension.UnitTest =
         /* Assumes a refresh exists that was enhanced for this dataset */
         Fact("GetDatasetRefreshExecutionDetailsInGroup Should Have One Object Return with Completed Status",
              "Completed",
-             Json.Document(GetDatasetRefreshExecutionDetailsInGroup(GroupTestID, DatasetTestID, EnchancedRefreshTestID))[extendedStatus]
+             Json.Document(GetDatasetRefreshExecutionDetailsInGroup(GroupTestID, DatasetTestID, EnhancedRefreshTestID))[extendedStatus]
         ),         
         /* GetDatasetRefreshHistoryInGroup*/  
         Fact("GetDatasetRefreshHistoryInGroup Should Be a Function",
@@ -392,7 +409,12 @@ shared MyExtension.UnitTest =
         ),
      /*****************
      REPORTS
-     *****************/        
+     *****************/    
+        /* GetPaginatedReportDatasourcesInGroup */
+        Fact("GetPaginatedReportDatasourcesInGroup Should Be a Function",
+             true,
+             Value.Is(GetPaginatedReportDatasourcesInGroup,Function.Type)
+        ),        
         /* GetReportPageInGroup */            
         Fact("GetReportPageInGroup Should Be a Function",
              true,
@@ -523,7 +545,7 @@ shared MyExtension.UnitTest =
      /*****************
      GOALS STATUS RULES
      *****************/               
-        /* GetScorecardGoalsStatusRulesInGroup */
+          /* GetScorecardGoalsStatusRulesInGroup */
         Fact("GetScorecardGoalsStatusRulesInGroup Should Be a Function",
              true,
              Value.Is(GetScorecardGoalsStatusRulesInGroup,Function.Type)
@@ -531,7 +553,7 @@ shared MyExtension.UnitTest =
         Fact("GetScorecardGoalsStatusRulesInGroup Should Be Correct Metadata",
             "scorecards(" & ScorecardOneTestID & ")/metrics(" & ScorecardOneGoalTestID & ")/statusRules",
             Text.AfterDelimiter(Json.Document(GetScorecardGoalsStatusRulesInGroup(GroupTestID,ScorecardOneTestID,ScorecardOneGoalTestID))[#"@odata.context"],"#")
-        ),    
+        ),  
      /*****************
      GROUPS
      *****************/             
@@ -657,10 +679,12 @@ shared MyExtension.UnitTest =
              true,
              Value.Is(GetScorecardInGroup,Function.Type)
         ),
+        /*
+        Disable after odatacontext dissappeared
         Fact("GetScorecardInGroup Should Be Correct Metadata",
              "scorecards/$entity",
              Text.AfterDelimiter(Json.Document(GetScorecardInGroup(GroupTestID,ScorecardOneTestID))[#"@odata.context"],"#")
-        ),
+        ),*/
         Fact("GetScorecardInGroup Should Return a goals property",
              true,
              List.Count(Json.Document(GetScorecardInGroup(GroupTestID,ScorecardOneTestID,"goals($expand=goalValues)"))[#"goals"]) > 0

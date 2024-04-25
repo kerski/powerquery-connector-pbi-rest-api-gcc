@@ -128,7 +128,8 @@ Not all functions from the Power BI REST API have been implemented.  Here are th
 | GetDatasetParametersInGroup             | Returns a list of parameters for the specified dataset from the specified workspace.  | [Datasets - Get Parameters In Group](https://learn.microsoft.com/en-us/rest/api/power-bi/datasets/get-parameters-in-group) |
 | GetDatasetRefreshExecutionDetailsInGroup             | Returns execution details of an enhanced refresh operation for the specified dataset from the specified workspace.  | [Datasets - Get Refresh Execution Details In Group](https://learn.microsoft.com/en-us/rest/api/power-bi/datasets/get-refresh-execution-details-in-group) |
 | GetDatasetRefreshHistoryInGroup| Returns the refresh history for the specified dataset from the specified workspace.  | [Datasets - Get Refresh History](https://learn.microsoft.com/en-us/rest/api/power-bi/datasets/get-refresh-history-in-group) |
-| GetDatasetRefreshScheduleInGroup|      Description  | [Datasets - Get Refresh Schedule In Group](https://learn.microsoft.com/en-us/rest/api/power-bi/datasets/get-refresh-schedule-in-group) |
+| GetDatasetRefreshScheduleInGroup|      Returns the refresh schedule for the specified dataset from the specified workspace.  | [Datasets - Get Refresh Schedule In Group](https://learn.microsoft.com/en-us/rest/api/power-bi/datasets/get-refresh-schedule-in-group) |
+|GetDatasetQueryScaleOutStatusInGroup |      Returns the query scale-out sync status for the specified dataset from the specified workspace. | [Datasets - Get Query Scale Out Sync Status In Group ](https://learn.microsoft.com/en-us/rest/api/power-bi/datasets/get-query-scale-out-sync-status-in-group) |
 
 ### GoalValues (Preview)
 | End Point                      | Description  | MSDN Documentation |
@@ -170,6 +171,7 @@ GetPipelines           | Returns a list of deployment pipelines that the user ha
 
 | End Point                      | Description  | MSDN Documentation |
 |:-----------------------------|:-------------|:------------------|
+| GetPaginatedReportDatasourcesInGroup        | Returns a list of data sources for the specified paginated report (RDL) from the specified workspace.  | [Reports - Get Datasources In Group](https://learn.microsoft.com/en-us/rest/api/power-bi/reports/get-datasources-in-group) |
 | GetPageInGroup         | Returns the specified page within the specified report from the specified workspace.  | [Reports - Get Page In Group](https://learn.microsoft.com/en-us/rest/api/power-bi/reports/get-page-in-group) |
 | GetPagesInGroup          | Returns a list of pages within the specified report from the specified workspace.  | [Reports - Get Pages In Group](https://learn.microsoft.com/en-us/rest/api/power-bi/reports/get-pages-in-group) |
 | GetReportInGroup          | Returns the specified report from the specified workspace.  | [Reports - Get Report In Group](https://learn.microsoft.com/en-us/rest/api/power-bi/reports/get-report-in-group) |

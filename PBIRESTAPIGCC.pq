@@ -9,7 +9,7 @@
     custom connector.  For more information on installing a custom data connector with a gateway
     please see: https://learn.microsoft.com/en-us/power-bi/connect-data/service-gateway-custom-connectors .
 */
-[Version = "1.2.0"]
+[Version = "1.2.2"]
 section PBIRESTAPIGCC;
 [
     DataSource.Kind = "PBIRESTAPIGCC",
@@ -51,12 +51,14 @@ let
             {"GetDatasetDatasourcesInGroup","GetDatasetDatasourcesInGroup",PBIRESTAPIGCC.GetDatasetDatasourcesInGroup,"Function","GetDatasetDatasourcesInGroup",true},
             {"GetDatasetDirectQueryRefreshScheduleInGroup","GetDatasetDirectQueryRefreshScheduleInGroup",PBIRESTAPIGCC.GetDatasetDirectQueryRefreshScheduleInGroup,"Function","GetDatasetDirectQueryRefreshScheduleInGroup",true},
             {"GetDatasetParametersInGroup","GetDatasetParametersInGroup",PBIRESTAPIGCC.GetDatasetParametersInGroup,"Function","GetDatasetParametersInGroup",true},
+            {"GetDatasetQueryScaleOutStatusInGroup","GetDatasetQueryScaleOutStatusInGroup",PBIRESTAPIGCC.GetDatasetQueryScaleOutStatusInGroup,"Function","GetDatasetQueryScaleOutStatusInGroup",true},
             {"GetDatasetRefreshExecutionDetailsInGroup","GetDatasetRefreshExecutionDetailsInGroup",PBIRESTAPIGCC.GetDatasetRefreshExecutionDetailsInGroup,"Function","GetDatasetRefreshExecutionDetailsInGroup",true},
             {"GetDatasetRefreshHistoryInGroup","GetDatasetRefreshHistoryInGroup",PBIRESTAPIGCC.GetDatasetRefreshHistoryInGroup,"Function","GetDatasetRefreshHistoryInGroup",true},
             {"GetDatasetRefreshScheduleInGroup","GetDatasetRefreshScheduleInGroup",PBIRESTAPIGCC.GetDatasetRefreshScheduleInGroup,"Function","GetDatasetRefreshScheduleInGroup",true},
             {"ExecuteQuery","ExecuteQuery",PBIRESTAPIGCC.ExecuteQuery,"Function","ExecuteQuery",true},
             {"ExecuteQueryInGroup","ExecuteQueryInGroup",PBIRESTAPIGCC.ExecuteQueryInGroup,"Function","ExecuteQueryInGroup",true},
             /* Reports */
+            {"GetPaginatedReportDatasourcesInGroup","GetPaginatedReportDatasourcesInGroup",PBIRESTAPIGCC.GetPaginatedReportDatasourcesInGroup,"Function","GetPaginatedReportDatasourcesInGroup",true},
             {"GetReportPageInGroup","GetReportPageInGroup",PBIRESTAPIGCC.GetReportPageInGroup,"Function","GetReportPageInGroup",true},
             {"GetReportPagesInGroup","GetReportPagesInGroup",PBIRESTAPIGCC.GetReportPagesInGroup,"Function","GetReportPagesInGroup",true},
             {"GetReportInGroup","GetReportInGroup",PBIRESTAPIGCC.GetReportInGroup,"Function","GetReportInGroup",true},
@@ -1269,6 +1271,50 @@ GetDatasetRefreshScheduleInGroup = (optional groupId as text , optional datasetI
         result;
 /*** End GetDatasetRefreshScheduleInGroup***/
 
+/*** GetDatasetQueryScaleOutStatusInGroup ***/
+shared PBIRESTAPIGCC.GetDatasetQueryScaleOutStatusInGroup = Value.ReplaceType(
+    GetDatasetQueryScaleOutStatusInGroup,
+    GetDatasetQueryScaleOutStatusInGroupType
+);
+
+GetDatasetQueryScaleOutStatusInGroupType = type function (
+    optional groupId as (
+        type text meta [
+            Documentation.FieldCaption = "Group ID",
+            Documentation.FieldDescription = "The workspace ID.",
+            Documentation.SampleValues = {
+                "xxx-xxxx-abcd..."
+            }
+        ]
+    ),
+    optional datasetId as (
+        type text meta [
+            Documentation.FieldCaption = "Dataset ID",
+            Documentation.FieldDescription = "The Dataset ID.",
+            Documentation.SampleValues = {
+                "xxx-xxxx-efgh..."
+            }
+        ]
+    )
+) as table meta [
+    Documentation.Name = "PBIRESTAPIGCC.GetDatasetQueryScaleOutStatusInGroup",
+    Documentation.LongDescription = "Returns the query scale-out sync status for the specified dataset from the specified workspace.",
+    Documentation.Examples = {
+        [
+            Code = "=PBIRESTAPIGCC.GetDatasetQueryScaleOutStatusInGroup(""xxx-xxxx-abcd..."",""xxx-xxxx-efgh..."")",
+            Result = "Defined as: https://learn.microsoft.com/en-us/rest/api/power-bi/datasets/get-query-scale-out-sync-status-in-group"
+        ]
+    }
+];
+
+GetDatasetQueryScaleOutStatusInGroup = (optional groupId as text , optional datasetId as text) =>
+    let
+        result = GetJSON("v1.0/myorg/groups/" & groupId & "/datasets/" & datasetId & "/queryScaleOut/syncStatus")
+    in
+        result;
+
+/*** End GetDatasetQueryScaleOutStatusInGroup ***/
+
 /*** ExecuteQuery ***/
 shared PBIRESTAPIGCC.ExecuteQuery = Value.ReplaceType(
     ExecuteQuery,
@@ -1452,6 +1498,46 @@ ExecuteQueryInGroup = (optional groupId as text, optional datasetId as text, opt
 *****************/
 
 /*** GetPaginatedReportDatasourcesInGroup ***/
+shared PBIRESTAPIGCC.GetPaginatedReportDatasourcesInGroup = Value.ReplaceType(
+    GetPaginatedReportDatasourcesInGroup,
+    GetPaginatedReportDatasourcesInGroupType
+);
+
+GetPaginatedReportDatasourcesInGroupType = type function (
+    optional groupId as (
+        type text meta [
+            Documentation.FieldCaption = "Group ID",
+            Documentation.FieldDescription = "The workspace ID.",
+            Documentation.SampleValues = {
+                "xxx-xxxx-abcd..."
+            }
+        ]
+    ),
+    optional reportId as (
+        type text meta [
+            Documentation.FieldCaption = "Report ID",
+            Documentation.FieldDescription = "The Report ID.",
+            Documentation.SampleValues = {
+                "xxx-xxxx-efgh..."
+            }
+        ]
+    )   
+) as table meta [
+    Documentation.Name = "PBIRESTAPIGCC.GetPaginatedReportDatasourcesInGroup",
+    Documentation.LongDescription = "Returns a list of data sources for the specified paginated report (RDL) from the specified workspace.",
+    Documentation.Examples = {
+        [
+            Code = "=PBIRESTAPIGCC.GetPaginatedReportDatasourcesInGroup(""xxx-xxxx-abcd..."",""xxx-xxxx-efgh..."",""ReportSection"")",
+            result = "Defined as https://learn.microsoft.com/en-us/rest/api/power-bi/reports/get-datasources-in-group"
+        ]
+    }
+];
+
+GetPaginatedReportDatasourcesInGroup = (optional groupId as text , optional reportId as text) =>
+    let
+        result = GetJSON("v1.0/myorg/groups/" & groupId & "/reports/" & reportId & "/datasources")
+    in
+        result;
 /*** End GetPaginatedReportDatasourcesInGroup ***/
 
 /*** GetReportExportToFileStatusInGroup ***/
