@@ -32,6 +32,10 @@ shared MyExtension.UnitTest =
     // Sync Status Workspace ID
     ScaleOutWorkspaceID = Environment.FeatureSwitch("ScaleOutWorkspaceID"),
     ScaleOutDatasetID = Environment.FeatureSwitch("ScaleOutDatasetID"),
+    // Export Report or Paginated Report variables
+    ExportWorkspaceID = Environment.FeatureSwitch("ExportWorkspaceID"),
+    ExportReportID = Environment.FeatureSwitch("ExportReportID"),
+    ExportPaginatedReportID = Environment.FeatureSwitch("ExportPaginatedReportID"),
 
     // Extracts Function from group
     _GetFunction = (_func_key as text) =>
@@ -81,6 +85,7 @@ shared MyExtension.UnitTest =
     GetReportPagesInGroup = _GetFunction("GetReportPagesInGroup"),
     GetReportInGroup = _GetFunction("GetReportInGroup"),
     GetReportsInGroup = _GetFunction("GetReportsInGroup"),
+    ExportReportInGroup = _GetFunction("ExportReportInGroup"),
     /* GoalValues */
     GetScorecardGoalValuesInGroup = _GetFunction("GetScorecardGoalValuesInGroup"),
     GetScorecardGoalValueInGroup = _GetFunction("GetScorecardGoalValueInGroup"),
@@ -463,6 +468,24 @@ shared MyExtension.UnitTest =
              true,
              List.Count(Json.Document(GetReportsInGroup(GroupTestID))[value]) > 0
         ), 
+        /* ExportReportInGroup */
+        Fact("ExportReportInGroup Should Be a Function",
+             true,
+             Value.Is(ExportReportInGroup,Function.Type)
+        ),
+        Fact("ExportReportInGroup Should Return Binary When LiveConnect",
+             true,
+             Value.Is(ExportReportInGroup(ExportWorkspaceID,ExportReportID,"LiveConnect",false),Binary.Type)
+        ),
+        Fact("ExportReportInGroup Should Return When IncludeModel",
+             true,
+             Value.Is(ExportReportInGroup(ExportWorkspaceID,ExportReportID,"IncludeModel",false),Binary.Type)
+        ),  
+        Fact("ExportReportInGroup Should Return When IncludeModel (Paginated Report)",
+             true,
+             Value.Is(ExportReportInGroup(ExportWorkspaceID,ExportPaginatedReportID,"IncludeModel",false),Binary.Type)
+        ),
+
      /*****************
      GOAL VALUES
      *****************/

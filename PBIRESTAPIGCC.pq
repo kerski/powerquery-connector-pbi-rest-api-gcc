@@ -9,7 +9,7 @@
     custom connector.  For more information on installing a custom data connector with a gateway
     please see: https://learn.microsoft.com/en-us/power-bi/connect-data/service-gateway-custom-connectors .
 */
-[Version = "1.2.2"]
+[Version = "1.3.0"]
 section PBIRESTAPIGCC;
 [
     DataSource.Kind = "PBIRESTAPIGCC",
@@ -63,6 +63,7 @@ let
             {"GetReportPagesInGroup","GetReportPagesInGroup",PBIRESTAPIGCC.GetReportPagesInGroup,"Function","GetReportPagesInGroup",true},
             {"GetReportInGroup","GetReportInGroup",PBIRESTAPIGCC.GetReportInGroup,"Function","GetReportInGroup",true},
             {"GetReportsInGroup","GetReportsInGroup",PBIRESTAPIGCC.GetReportsInGroup,"Function","GetReportsInGroup",true},
+            {"ExportReportInGroup","ExportReportInGroup",PBIRESTAPIGCC.ExportReportInGroup,"Function","ExportReportInGroup",true},
             /* Goal Values */            
             {"GetScorecardGoalValuesInGroup","GetScorecardGoalValuesInGroup",PBIRESTAPIGCC.GetScorecardGoalValuesInGroup,"Function","GetScorecardGoalValuesInGroup",true},
             {"GetScorecardGoalValueInGroup","GetScorecardGoalValueInGroup",PBIRESTAPIGCC.GetScorecardGoalValueInGroup,"Function","GetScorecardGoalValueInGroup",true},            
@@ -1715,6 +1716,71 @@ GetReportsInGroup = (optional groupId as text) =>
         result;
 /*** End GetReportsInGroup***/
 
+/*** ExportReportInGroup ***/
+shared PBIRESTAPIGCC.ExportReportInGroup = Value.ReplaceType(
+    ExportReportInGroup,
+    ExportReportInGroupType
+);
+
+ExportReportInGroupType = type function (
+    optional groupId as (
+        type text meta [
+            Documentation.FieldCaption = "Group ID",
+            Documentation.FieldDescription = "The workspace ID.",
+            Documentation.SampleValues = {
+                "xxx-xxxx-abcd..."
+            }
+        ]
+    ),
+    optional reportId as (
+        type text meta [
+            Documentation.FieldCaption = "Report ID",
+            Documentation.FieldDescription = "The Report ID.",
+            Documentation.SampleValues = {
+                "xxx-xxxx-efgh..."
+            }
+        ]
+    ),
+    optional downloadType as (
+        type text meta [
+            Documentation.FieldCaption = "Download Type",
+            Documentation.FieldDescription = "The download type.",
+            Documentation.SampleValues = {
+                "IncludeModel or LiveConnect"
+            }
+        ]
+    ),
+    optional preferClientRouting as (
+        type text meta [
+            Documentation.FieldCaption = "Prefer Client Routing",
+            Documentation.FieldDescription = "Prefer Client Routing type.",
+            Documentation.SampleValues = {
+                "true or null"
+            }
+        ]
+    )         
+) as table meta [
+    Documentation.Name = "PBIRESTAPIGCC.ExportReportInGroup",
+    Documentation.LongDescription = "Exports the specified report from the specified workspace to a Power BI .pbix or .rdl file.",
+    Documentation.Examples = {
+        [
+            Code = "=PBIRESTAPIGCC.ExportReportInGroup(""xxx-xxxx-abcd..."",""xxx-xxxx-efgh..."",""IncludeModel"")",
+            result = "Defined as https://learn.microsoft.com/en-us/rest/api/power-bi/reports/export-report-in-group#response"
+        ]
+    }
+];
+
+ExportReportInGroup = (optional groupId as text , optional reportId as text, optional downloadType as text, optional preferClientRouting as logical) as binary =>
+    let
+        //Build Query String
+        downloadQS = if(downloadType <> null and downloadType <> "") then "?downloadType=" & downloadType else "?downloadType=IncludeModel",
+        // Handle preferClientRouting
+        preferQS = if(preferClientRouting = true) then "&preferClientRouting=true" else "&preferClientRouting=false",
+        result = GetFile("v1.0/myorg/groups/" & groupId & "/reports/" & reportId & "/Export" & downloadQS & preferQS)
+    in
+        result;
+/*** End ExportReportInGroup***/
+
 /*****************
     GROUPS
 *****************/
@@ -2690,6 +2756,20 @@ GetScorecardByReportIdInGroup = (optional groupdId as text, optional reportId as
 /*****************
     HELPER FUNCTIONS
 *****************/
+GetFile = (optional relPath as text) =>
+    let
+        params = [Headers=[Accept="application/octet-stream"], RelativePath = relPath],
+        //Get Pages
+        //Hard-coded Base URL because Power BI Service won't recognize parameter despite numerous attempts
+        webSource = Web.Contents(
+            "https://api.powerbigov.us",
+            params
+        ),
+        //Convert to Json
+        result = webSource
+    in
+        result;
+
 GetJSON = (optional relPath as text) =>
     let
         params = [Headers = [#"Content-Type" = "application/json"], RelativePath = relPath],
