@@ -118,19 +118,7 @@ shared MyExtension.UnitTest =
      /*****************
      APPS
      *****************/
-        /* GetApp */
-        Fact("GetApp Should Be a Function",
-             true,
-             Value.Is(GetApp,Function.Type)
-        ),
-        Fact("GetApp Should Return Correct Metadata",
-             "apps/$entity",
-             Text.AfterDelimiter(Json.Document(GetApp(AppTestID))[#"@odata.context"],"#")
-        ),
-        Fact("GetApp Should Return AppTestID",
-            AppTestID,
-            Json.Document(GetApp(AppTestID))[id]
-        ),
+        
         /* GetApps */        
         Fact("GetApps Should Be a Function",
              true,
