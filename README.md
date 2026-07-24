@@ -4,6 +4,7 @@
 This Custom Data Connector wraps many of the "Get" endpoints in the Power BI API (with the exception of the /executeQueries endpoint), so that OAuth can be used to authenticate to the service.  This connector serves as a way to have a library of Power Query functions to build datasets based on the Power BI APIs without the need for storing client secrets or passwords in the dataset.  
 
 Each function returns a JSON body and not a table of data.  This decision was made to provide flexibility in converting the JSON body to tabular data when 1) the API responses are changed by Microsoft or 2) the API responses differ between commercial and sovereign clouds (e.g., GCC, DoD, etc.). 
+The exceptions are `ExecuteDaxQueries` and `ExecuteDaxQueriesInGroup`, which return a **list of Power Query tables** (one table per EVALUATE result set, each preserving its own schema). These call the `executeDaxQueries` endpoint, auto-detect Apache Arrow IPC responses, and parse them directly (falling back to JSON parsing only when the response itself is JSON). Index the list (e.g. `{0}`) or iterate it. See [Arrow IPC Support](#arrow-ipc-support-executedaxqueries) and the [call tree](#executedaxqueries-call-tree) below.
 
 ## Table of Contents
 
@@ -11,6 +12,8 @@ Each function returns a JSON body and not a table of data.  This decision was ma
     1. [Desktop](#desktop)
     1. [Using Functions](#using-functions)
     1. [Functions Implemented](#functions-implemented)
+    1. [Arrow IPC Support (ExecuteDaxQueries)](#arrow-ipc-support-executedaxqueries)
+    1. [ExecuteDaxQueries Call Tree](#executedaxqueries-call-tree)
     1. [On-Premises Gateway](#on-premises-gateway)
 1. [Building Connector](#building-connector)
     1. [Testing Connector](#testing-connector)
@@ -27,7 +30,7 @@ Each function returns a JSON body and not a table of data.  This decision was ma
 Because this is a custom data connector you have to choose this option in order to use it in Power BI Desktop.
 
 3. Close all Power BI Desktop instances on your local machine.  You are often prompted to do so by Power BI Desktop.
-4. Copy the [.mez file](https://github.com/kerski/powerquery-connector-pbi-rest-api-gcc/releases/download/v1.2.0-beta/powerquery-connector-pbi-rest-api-gcc.mez) to your folder "Documents\Power BI Desktop\Custom Connectors".  If the folder does not exist, create it first.
+4. Copy the [.mez file](https://github.com/kerski/powerquery-connector-pbi-rest-api-commercial/releases/download/v.1.2.0-beta/powerquery-connector-pbi-rest-api-commercial.mez) to your folder "Documents\Power BI Desktop\Custom Connectors".  If the folder does not exist, create it first.
 5. Open Power BI Desktop.
 6. Select Get Data option.
 7. Navigate to the "Other" section and you should see the "Connect to Power BI REST API" connector.
@@ -119,6 +122,8 @@ Not all functions from the Power BI REST API have been implemented.  Here are th
 | GetDatasetDiscoverGatewaysInGroup                  | Returns a list of gateways that the specified dataset from the specified workspace can be bound to.  | [Datasets - Discover Gateways In Group](https://learn.microsoft.com/en-us/rest/api/power-bi/datasets/discover-gateways-in-group#gateways) |
 | ExecuteQuery                  | Executes a single Data Analysis Expressions (DAX) query against a dataset.  | [Dataset - Execute Queries](https://learn.microsoft.com/en-us/rest/api/power-bi/datasets/execute-queries) |
 | ExecuteQueryInGroup                 | Executes a single Data Analysis Expressions (DAX) query against a dataset within a workspace. | [Dataset - Execute Queries In Group](https://learn.microsoft.com/en-us/rest/api/power-bi/datasets/execute-queries-in-group) |
+| ExecuteDaxQueries             | Executes DAX queries against a dataset and attempts Arrow IPC response detection/parsing to return native tables.  | [Dataset - Execute Dax Queries](https://learn.microsoft.com/en-us/rest/api/power-bi/datasets/execute-dax-queries) |
+| ExecuteDaxQueriesInGroup      | Executes DAX queries in a workspace dataset and attempts Arrow IPC response detection/parsing to return native tables. | [Dataset - Execute Dax Queries In Group](https://learn.microsoft.com/en-us/rest/api/power-bi/datasets/execute-dax-queries-in-group) |
 | GetDatasetInGroup             | Returns the specified dataset from the specified workspace.  | [Datasets - Get Dataset In Group](https://learn.microsoft.com/en-us/rest/api/power-bi/datasets/get-dataset-in-group) |
 | GetDatasetToDataflowsLinksInGroup             | Returns a list of upstream dataflows for datasets from the specified workspace.  | [Datasets - Get Dataset To Dataflows Links In Group](https://learn.microsoft.com/en-us/rest/api/power-bi/datasets/get-dataset-to-dataflows-links-in-group) |
 | GetDatasetUsersInGroup            | Returns a list of principals that have access to the specified dataset.  | [Datasets - Get Dataset Users In Group](https://learn.microsoft.com/en-us/rest/api/power-bi/datasets/get-dataset-users-in-group) |
@@ -129,7 +134,64 @@ Not all functions from the Power BI REST API have been implemented.  Here are th
 | GetDatasetRefreshExecutionDetailsInGroup             | Returns execution details of an enhanced refresh operation for the specified dataset from the specified workspace.  | [Datasets - Get Refresh Execution Details In Group](https://learn.microsoft.com/en-us/rest/api/power-bi/datasets/get-refresh-execution-details-in-group) |
 | GetDatasetRefreshHistoryInGroup| Returns the refresh history for the specified dataset from the specified workspace.  | [Datasets - Get Refresh History](https://learn.microsoft.com/en-us/rest/api/power-bi/datasets/get-refresh-history-in-group) |
 | GetDatasetRefreshScheduleInGroup|      Returns the refresh schedule for the specified dataset from the specified workspace.  | [Datasets - Get Refresh Schedule In Group](https://learn.microsoft.com/en-us/rest/api/power-bi/datasets/get-refresh-schedule-in-group) |
-|GetDatasetQueryScaleOutStatusInGroup |      Returns the query scale-out sync status for the specified dataset from the specified workspace. | [Datasets - Get Query Scale Out Sync Status In Group ](https://learn.microsoft.com/en-us/rest/api/power-bi/datasets/get-query-scale-out-sync-status-in-group) |
+|GetDatasetSyncStatusInGroup |      Returns the sync status information of the read-only replica and read/write dataset. (<b>Preview</b>: Power BI Dataset Scale-Out)  | [Datasets - Get Dataset Sync Status In Group ](https://learn.microsoft.com/en-us/power-bi/enterprise/service-premium-scale-out#enable-scale-out-for-your-workspace) |
+
+### Arrow IPC Support (ExecuteDaxQueries)
+
+This connector attempts Arrow IPC detection/parsing for `ExecuteDaxQueries` and `ExecuteDaxQueriesInGroup` responses and returns a list of Power Query tables (one per EVALUATE result set).
+
+Supported and validated today:
+
+- Arrow response detection by content type and/or Arrow magic bytes.
+- DAX JSON response parsing for non-Arrow payloads from `ExecuteDaxQueries*` endpoints.
+- Dictionary-encoded columns, including recursive dictionary dependencies across dictionary batches.
+- Dictionary delta and replacement semantics in parser logic.
+- **LZ4_FRAME per-buffer body compression** (Arrow `BodyCompression` codec `0`), decompressed in pure M and applied to both record and dictionary batches. This is what real `executeDaxQueries` responses use for wide/large results.
+- `date64` (millisecond) and `date32` (day) column decoding.
+- Deterministic parity validation against `ExecuteQuery*` for representative fixtures including:
+    - numbers
+    - booleans
+    - text
+    - date/datetime shapes
+    - blank/null values
+- Endpoint behavior contract: no fallback from `ExecuteDaxQueries*` to `ExecuteQuery*`.
+
+Current limitations and explicit non-support:
+
+- ZSTD-compressed Arrow bodies (`BodyCompression` codec `1`) are not supported and fail fast with an `Unsupported Arrow compression codec` diagnostic.
+- Primitive Arrow kinds outside implemented decoding paths fail fast with explicit `Unsupported primitive Arrow type` errors.
+- Unsupported or malformed dictionary metadata fails fast with actionable diagnostics.
+- Arrow parsing support is scoped to connector-tested scenarios; unvalidated Arrow feature families (for example, uncommon extension/layout combinations) are not guaranteed.
+
+Target Arrow format baseline:
+
+- The parser is implemented against the current connector's Flatbuffers/IPC interpretation used by Power BI `ExecuteDaxQueries*` responses.
+- Compatibility is validated through the project's targeted parity tests and Arrow reliability gate rather than a broad claim of full Apache Arrow specification coverage.
+
+### ExecuteDaxQueries Call Tree
+
+Both `ExecuteDaxQueries` and `ExecuteDaxQueriesInGroup` share the same request/response pipeline; they differ only in the REST path (`.../datasets/{id}/executeDaxQueries` vs `.../groups/{groupId}/datasets/{id}/executeDaxQueries`). The response is buffered, its kind is detected, and it is routed to either the Arrow parser or the JSON parser. There is **no fallback** to `ExecuteQuery*` — a parse failure surfaces as an actionable error.
+
+```mermaid
+flowchart TD
+    A["ExecuteDaxQueries(datasetId, query, ...)"] --> P
+    B["ExecuteDaxQueriesInGroup(groupId, datasetId, query, ...)"] --> P
+    P["BuildExecuteDaxRequestPayload<br/>(drops null options)"] --> PD["PostExecuteDaxList(params)"]
+    PD --> WC["Web.Contents → .../executeDaxQueries<br/>Accept: arrow.stream, arrow.file, octet-stream, json"]
+    WC --> BB["Binary.Buffer(response)"]
+    BB --> RT["ExecuteDaxResponseAsTableList(bytes, headers)"]
+    RT --> DK["ExecuteDaxDetectResponseKind<br/>ArrowDetectionIsArrowResponse:<br/>content-type or Arrow magic bytes"]
+    DK -->|Arrow| AR["ArrowFromBinaryTables"]
+    DK -->|JSON| JS["ExecuteDaxJsonToTableList"]
+    AR --> PS["ArrowParseStreamTables"]
+    PS --> PM["ArrowParseMessage<br/>Schema / DictionaryBatch / RecordBatch"]
+    PS --> RDB["ArrowResolvePendingDictionaryBatches<br/>→ ArrowParseDictionaryBatch"]
+    PS --> RB["ArrowRecordBatchToTable"]
+    RB --> DCB["ArrowDecompressBatchBuffers<br/>LZ4_FRAME per buffer (codec 0)"]
+    RB --> DEC["ArrowDecodeColumn<br/>(per column, dictionary-aware)"]
+    AR --> T["list of Power Query tables<br/>(one per EVALUATE result set)"]
+    JS --> T
+```
 
 ### GoalValues (Preview)
 | End Point                      | Description  | MSDN Documentation |
